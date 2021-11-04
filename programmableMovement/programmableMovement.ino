@@ -1,3 +1,4 @@
+//Included libraries
 #include <Wire.h>
 #include <Zumo32U4.h>
 Zumo32U4Encoders encoders;
@@ -5,10 +6,6 @@ Zumo32U4LCD LCD;
 Zumo32U4Buzzer buzzer;
 Zumo32U4ButtonA buttonA;
 Zumo32U4Motors motors;
-
-
-//General variables
-unsigned long timeNow = 0;
 
 //Interaction variables
 int accCountsR = 0;
@@ -19,6 +16,8 @@ int durationSelected = 0;
 //Stage variables
 int actualStage = 0; //0 = Select command, 1 = Select speed,  2 = Select duration, 3 = Run robot
 bool hasRun_0 = false, hasRun_1 = false, hasRun_2 = false, hasRun_3 = false;
+int moveCountdown = 5;
+bool countdownDone = false;
 
 void setup() {
   Serial.begin(9600);
@@ -26,14 +25,12 @@ void setup() {
 }
 
 void loop() {
-  //timeNow = millis();
-
   if (actualStage == 0) { //Stage 0 --> Select command
     if (hasRun_0 == false) {
       Serial.println("I am in stage 0!");
       hasRun_0 = true;
     }
-    stage0command(); 
+    stage0();
   }
 
   if (actualStage == 1) { // Stage 1 --> Select speed
@@ -41,15 +38,15 @@ void loop() {
       Serial.println("I am in stage 1!");
       hasRun_1 = true;
     }
-    stage1speed(); 
+    stage1();
   }
 
-  if (actualStage == 2) { //Stage 1 --> Select duration
+  if (actualStage == 2) { //Stage 2 --> Select duration
     if (hasRun_2 == false) {
       Serial.println("I am in stage 2!");
       hasRun_2 = true;
     }
-    stage2duration();
+    stage2();
   }
 
   if (actualStage == 3) { //Stage 3 --> Running the robot
@@ -57,17 +54,16 @@ void loop() {
       Serial.println("I am in stage 3!");
       hasRun_3 = true;
     }
-    LCDstage3runRobot(commandSelected, durationSelected);
-    stage3runRobot(commandSelected, speedSelected, durationSelected);
-    LCD.clear(); //Should be removed if millis is added to LCDstage3runRobot
+
+    if (countdownDone == true); {
+      stage3LCD(commandSelected, durationSelected);
+      stage3(commandSelected, speedSelected, durationSelected);
+      victory();
+    }
   }
-
-
-
-  
 }
 
-void stage0command() { //Select drive command
+void stage0() {                                                   //Select drive command
   readEncoders(); //Read the encoders
   if (accCountsR > 100) { //If is larger or lower than some threshhold then
     beep();
@@ -85,7 +81,7 @@ void stage0command() { //Select drive command
 
   Serial.println("Count: " + (String)accCountsR + " Command: " + (String)commandSelected);
 
-  LCDstage0command(commandSelected);
+  stage0LCD(commandSelected);
   //Show it on the screen
   //Title
   //In which command we are
@@ -96,7 +92,7 @@ void stage0command() { //Select drive command
   }
 }
 
-void LCDstage0command(int moveCommand) { //Display selection of commands on LCD display
+void stage0LCD(int moveCommand) {                                 //Display selection of commands on LCD display
   String nameCommand;
   switch (moveCommand) {
     case 0:
@@ -124,7 +120,9 @@ void LCDstage0command(int moveCommand) { //Display selection of commands on LCD 
   LCD.print(nameCommand);
 }
 
-void stage1speed() { //Select drive speed
+
+
+void stage1() { //Select drive speed
   readEncoders(); //Read the encoders
   if (accCountsR > 100) { //If is larger or lower than some threshhold then
     beep();
@@ -142,7 +140,7 @@ void stage1speed() { //Select drive speed
 
   Serial.println("Count: " + (String)accCountsR + " Speed: " + (String)speedSelected);
 
-  LCDstage1speed(speedSelected);
+  stage1LCD(speedSelected);
 
   if (buttonA.isPressed()) { //Is the button pressed?
     actualStage = 2;  //If yes I jump to next stage and store the command
@@ -150,14 +148,16 @@ void stage1speed() { //Select drive speed
   }
 }
 
-void LCDstage1speed(int moveSpeed) { //Display selection of speeds on LCD display
+void stage1LCD(int moveSpeed) {                                   //Display selection of speeds on LCD display
   LCD.clear();
   LCD.print("Speed>");
   LCD.gotoXY(0, 1);
   LCD.print(moveSpeed);
 }
 
-void stage2duration() { //Select drive duration
+
+
+void stage2() { //Select drive duration
   readEncoders(); //Read the encoders
   if (accCountsR > 50) { //If is larger or lower than some threshhold then
     beep();
@@ -175,7 +175,7 @@ void stage2duration() { //Select drive duration
 
   Serial.println("Count: " + (String)accCountsR + " Speed: " + (String)durationSelected);
 
-  LCDstage2duration(durationSelected);
+  stage2LCD(durationSelected);
 
   if (buttonA.isPressed()) { //Is the button pressed?
     actualStage = 3;  //If yes I jump to next stage and store the command
@@ -183,14 +183,16 @@ void stage2duration() { //Select drive duration
   }
 }
 
-void LCDstage2duration(int moveDuration) { //Display selection of duration on LCD display
+void stage2LCD(int moveDuration) {                                //Display selection of duration on LCD display
   LCD.clear();
   LCD.print("Duration>");
   LCD.gotoXY(0, 1);
   LCD.print(moveDuration);
 }
 
-void stage3runRobot(int moveCommand, int moveSpeed, int moveDuration) { //Run the robot with specified command, speed and duration
+
+
+void stage3(int moveCommand, int moveSpeed, int moveDuration) {   //Run the robot with specified command, speed and duration
   switch (moveCommand) { //0 = Forward,  1 = Backwards, 2 = Right, 3 = Left
     case 0:
       moveForward(moveSpeed, moveDuration);
@@ -216,7 +218,7 @@ void stage3runRobot(int moveCommand, int moveSpeed, int moveDuration) { //Run th
   moveStop();
 }
 
-void LCDstage3runRobot(int moveCommand, int moveDuration) { //Display what the robot is doing on LCD display
+void stage3LCD(int moveCommand, int moveDuration) {               //Display what the robot is doing on LCD display
   String nameCommand;
   switch (moveCommand) { //0 = Forward,  1 = Backwards, 2 = Right, 3 = Left
     case 0:
@@ -237,7 +239,7 @@ void LCDstage3runRobot(int moveCommand, int moveDuration) { //Display what the r
 
     default:
       nameCommand = "Error! :(";
-      Serial.println("Error (LCDstage3)");
+      Serial.println("Error (stage3LCD)");
   }
   LCD.clear();
   LCD.gotoXY(0, 1);
@@ -246,12 +248,14 @@ void LCDstage3runRobot(int moveCommand, int moveDuration) { //Display what the r
   //LCD.clear();
 }
 
-void moveForward(int moveSpeed, int moveDuration) { //Function for moving the robot forwards
+
+
+void moveForward(int moveSpeed, int moveDuration) {               //Function for moving the robot forwards
   motors.setSpeeds(moveSpeed, moveSpeed);
   delay(moveDuration);
 }
 
-void moveBackwards(int moveSpeed, int moveDuration) { //Function for moving the robot backwards
+void moveBackwards(int moveSpeed, int moveDuration) {             //Function for moving the robot backwards
   motors.setSpeeds(-moveSpeed, -moveSpeed);
   delay(moveDuration);
 }
@@ -274,15 +278,47 @@ void moveTurn(int moveCommand, int moveSpeed, int moveDuration) { //Function for
   delay(moveDuration);
 }
 
-void moveStop() { //Function for stopping the motors of the robot
+void moveStop() {                                                 //Function for stopping the motors of the robot
   motors.setSpeeds(0, 0);
 }
 
-void beep() { //Play small beep noise from buzzer
+
+
+void countdown() {                                                //Countsdown and displays it on LCD display
+  if (moveCountdown == 5) {
+    for (int i = 0; i <= 5; i++) {
+      Serial.println(moveCountdown);
+      LCD.clear();
+      LCD.print("Moving in:");
+      LCD.gotoXY(0, 1);
+      LCD.print(moveCountdown);
+      moveCountdown = moveCountdown - 1;
+      delay(1000);
+    }
+    Serial.println("moveCountdown done!");
+    countdownDone = true;
+  }
+}
+
+void beep() {                                                     //Play small beep noise from buzzer
   buzzer.playNote(NOTE_A(4), 20, 15);
   delay(30);
 }
 
-void readEncoders() { //Read encoders
+void victory() {                                                  //Display success message on LCD display and play victory noise from buzzer
+  LCD.clear();
+  LCD.gotoXY(0, 1);
+  LCD.print("SUCCESS! :)");
+  buzzer.playNote(NOTE_D_SHARP(5), 167, 15);
+  delay(334);
+  buzzer.playNote(NOTE_D_SHARP(5), 167, 15);
+  delay(167);
+  buzzer.playNote(NOTE_D_SHARP(5), 167, 15);
+  delay(167);
+  buzzer.playNote(NOTE_A_SHARP(5), 167, 15);
+  delay(167);
+}
+
+void readEncoders() {                                             //Read encoders
   accCountsR = accCountsR + encoders.getCountsAndResetRight();
 }
