@@ -5,10 +5,12 @@ Zumo32U4LCD LCD;
 Zumo32U4Buzzer buzzer;
 Zumo32U4ButtonA buttonA;
 
+int i_0 = 0, i_1 = 0, i_2 = 0, i_3 = 0;
+
 int accCountsR = 0;
 int commandSelected = 0; //0 = Forward,  1 = Backwards, 2 = Right, 3 = Left
 int speedSelected = 0;
-duraationSelected = 0;
+int durationSelected = 0;
 
 int actualStage = 0; //0 = Select command, 1 = Select speed,  2 = Select duration, 3 = Run robot
 
@@ -19,15 +21,28 @@ void setup() {
 void loop() {
   delay(200);
   if (actualStage == 0) {
+    if (i_0 == 0) {
+      Serial.println("I am in stage 0!");
+      i_0++;
+    }
     stage0(); //Stage 0 --> select command
   }
 
   if (actualStage == 1) {
-    Serial.println("I am in stage 1!");
+    if (i_1 == 0) {
+      Serial.println("I am in stage 1!");
+      i_1++;
+    }
     stage1speed();
-    stage1duration();
-    
-    // Stage 1 --> Select speed and time
+    // Stage 1 --> Select speed
+  }
+
+  if (actualStage == 2) {
+  if (i_2 == 0) {
+      Serial.println("I am in stage 2!");
+      i_2++;
+    }
+    stage2duration();
   }
 
 
@@ -62,7 +77,6 @@ void stage0() {
     actualStage = 1;  //If yes I jump to next stage and store the command
     buttonA.waitForRelease();
   }
-
 }
 
 void LCDStage0(int commandSelec) {
@@ -76,11 +90,11 @@ void LCDStage0(int commandSelec) {
       nameCommand = "Backward";
       break;
 
-    case 3:
+    case 2:
       nameCommand = "Right";
       break;
 
-    case 4:
+    case 3:
       nameCommand = "Left";
       break;
 
@@ -93,9 +107,6 @@ void LCDStage0(int commandSelec) {
   LCD.print(nameCommand);
 }
 
-void readEncoders() {
-  accCountsR = accCountsR + encoders.getCountsAndResetRight();
-}
 
 void stage1speed() {
   readEncoders(); //Read the encoders
@@ -123,25 +134,25 @@ void stage1speed() {
   }
 }
 
-void stage1duration() {
+void stage2duration() {
   readEncoders(); //Read the encoders
   if (accCountsR > 50) { //If is larger or lower than some threshhold then
     beep();
     durationSelected += 100; //Increment or decrement  the selected command
     accCountsR = accCountsR - 50;
-    if (durationSelected > 400) durationSelected = 0;
+    if (durationSelected > 10000) durationSelected = 0;
   }
   else if (accCountsR < -50) {
     beep();
-    speedSelected -= 50;
+    durationSelected -= 100;
     accCountsR = accCountsR + 50;
 
-    if (durationSelected < 0) durationSelected = 400;
+    if (durationSelected < 0) durationSelected = 10000;
   }
 
   Serial.println("Count: " + (String)accCountsR + " Speed: " + (String)durationSelected);
 
-  LCDStage1duration(durationSelected);
+  LCDstage2duration(durationSelected);
 
   if (buttonA.isPressed()) { //Is the button pressed?
     actualStage = 3;  //If yes I jump to next stage and store the command
@@ -156,7 +167,7 @@ void LCDStage1speed(int moveSpeed) {
   LCD.print(moveSpeed);
 }
 
-void LCDStage1duration(int moveDuration) {
+void LCDstage2duration(int moveDuration) {
   LCD.clear();
   LCD.print("Duration>");
   LCD.gotoXY(0, 1);
@@ -166,4 +177,8 @@ void LCDStage1duration(int moveDuration) {
 void beep() {
   buzzer.playNote(NOTE_A(4), 20, 15);
   delay(30);
+}
+
+void readEncoders() {
+  accCountsR = accCountsR + encoders.getCountsAndResetRight();
 }
