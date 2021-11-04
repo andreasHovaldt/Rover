@@ -1,4 +1,3 @@
-//Stage1 test // Nu tester jeg ogs
 #include <Wire.h>
 #include <Zumo32U4.h>
 Zumo32U4Encoders encoders;
@@ -9,10 +8,9 @@ Zumo32U4ButtonA buttonA;
 int accCountsR = 0;
 int commandSelected = 0; //0 = Forward,  1 = Backwards, 2 = Right, 3 = Left
 
-int actualStage = 0;  //
+int actualStage = 0;
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
 }
 
