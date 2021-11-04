@@ -1,4 +1,4 @@
-//Hej med dig 
+//Stage1 test // Nu tester jeg ogs //Tobias
 #include <Wire.h>
 #include <Zumo32U4.h>
 Zumo32U4Encoders encoders;
