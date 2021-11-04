@@ -7,6 +7,7 @@ Zumo32U4ButtonA buttonA;
 
 int accCountsR = 0;
 int commandSelected = 0; //0 = Forward,  1 = Backwards, 2 = Right, 3 = Left
+int speedSelected = 0;
 
 int actualStage = 0;
 
@@ -91,6 +92,24 @@ void LCDStage0(int commandSelec) {
 
 void readEncoderStage0() {
   accCountsR = accCountsR + encoders.getCountsAndResetRight();
+}
+
+void stage1() {
+if (accCountsR > 50) { //If is larger or lower than some threshhold then
+      beep();
+      speedSelected += 50; //Increment or decrement  the selected command
+      accCountsR = accCountsR - 50;
+      if (speedSelected > 400) commandSelected = 0;
+    }
+    else if (accCountsR < -50) {
+      beep();
+      speedSelected -= 50;
+      accCountsR = accCountsR + 50;
+
+      if (speedSelected < 0) speedSelected = 400;
+    }
+
+    Serial.println("Count: " + (String)accCountsR + " Command: " + (String)speedSelected);
 }
 
 void beep() {
