@@ -5,7 +5,7 @@ Zumo32U4LCD LCD;
 Zumo32U4Buzzer buzzer;
 Zumo32U4ButtonA buttonA;
 
-int i_0 = 0, i_1 = 0, i_2 = 0, i_3 = 0;
+bool hasRun_0 = false, hasRun_1 = false, hasRun_2 = false, hasRun_3 = false;
 
 int accCountsR = 0;
 int commandSelected = 0; //0 = Forward,  1 = Backwards, 2 = Right, 3 = Left
@@ -21,36 +21,35 @@ void setup() {
 void loop() {
   delay(200);
   if (actualStage == 0) {
-    if (i_0 == 0) {
+    if (hasRun_0 == false) {
       Serial.println("I am in stage 0!");
-      i_0++;
+      hasRun_0 = true;
     }
-    stage0(); //Stage 0 --> select command
+    stage0command(); //Stage 0 --> select command
   }
 
   if (actualStage == 1) {
-    if (i_1 == 0) {
+    if (hasRun_1 == false) {
       Serial.println("I am in stage 1!");
-      i_1++;
+      hasRun_1 = true;
     }
-    stage1speed();
-    // Stage 1 --> Select speed
+    stage1speed(); // Stage 1 --> Select speed
   }
 
   if (actualStage == 2) {
-  if (i_2 == 0) {
+  if (hasRun_2 == false) {
       Serial.println("I am in stage 2!");
-      i_2++;
+      hasRun_2 = true;
     }
     stage2duration();
   }
 
 
 
-  //Stage 2 --> Running the robot
+  //Stage 3 --> Running the robot
 }
 
-void stage0() {
+void stage0command() {
   readEncoders(); //Read the encoders
   if (accCountsR > 100) { //If is larger or lower than some threshhold then
     beep();
@@ -68,7 +67,7 @@ void stage0() {
 
   Serial.println("Count: " + (String)accCountsR + " Command: " + (String)commandSelected);
 
-  LCDStage0(commandSelected);
+  LCDstage0command(commandSelected);
   //Show it on the screen
   //Title
   //In which command we are
@@ -79,7 +78,7 @@ void stage0() {
   }
 }
 
-void LCDStage0(int commandSelec) {
+void LCDstage0command(int commandSelec) {
   String nameCommand;
   switch (commandSelec) {
     case 0:
@@ -107,7 +106,6 @@ void LCDStage0(int commandSelec) {
   LCD.print(nameCommand);
 }
 
-
 void stage1speed() {
   readEncoders(); //Read the encoders
   if (accCountsR > 100) { //If is larger or lower than some threshhold then
@@ -134,6 +132,13 @@ void stage1speed() {
   }
 }
 
+void LCDStage1speed(int moveSpeed) {
+  LCD.clear();
+  LCD.print("Speed>");
+  LCD.gotoXY(0, 1);
+  LCD.print(moveSpeed);
+}
+
 void stage2duration() {
   readEncoders(); //Read the encoders
   if (accCountsR > 50) { //If is larger or lower than some threshhold then
@@ -158,13 +163,6 @@ void stage2duration() {
     actualStage = 3;  //If yes I jump to next stage and store the command
     buttonA.waitForRelease();
   }
-}
-
-void LCDStage1speed(int moveSpeed) {
-  LCD.clear();
-  LCD.print("Speed>");
-  LCD.gotoXY(0, 1);
-  LCD.print(moveSpeed);
 }
 
 void LCDstage2duration(int moveDuration) {
