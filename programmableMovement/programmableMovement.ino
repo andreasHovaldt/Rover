@@ -54,11 +54,10 @@ void loop() {
       Serial.println("I am in stage 3!");
       hasRun_3 = true;
     }
-
+    countdown();
     if (countdownDone == true); {
       stage3LCD(commandSelected, durationSelected);
       stage3(commandSelected, speedSelected, durationSelected);
-      victory();
     }
   }
 }
@@ -118,6 +117,7 @@ void stage0LCD(int moveCommand) {                                 //Display sele
   LCD.print("Command>");
   LCD.gotoXY(0, 1);
   LCD.print(nameCommand);
+  delay(100);
 }
 
 
@@ -153,6 +153,7 @@ void stage1LCD(int moveSpeed) {                                   //Display sele
   LCD.print("Speed>");
   LCD.gotoXY(0, 1);
   LCD.print(moveSpeed);
+  delay(100);
 }
 
 
@@ -188,6 +189,7 @@ void stage2LCD(int moveDuration) {                                //Display sele
   LCD.print("Duration>");
   LCD.gotoXY(0, 1);
   LCD.print(moveDuration);
+  delay(100);
 }
 
 
@@ -216,6 +218,8 @@ void stage3(int moveCommand, int moveSpeed, int moveDuration) {   //Run the robo
       //Add LCD error
   }
   moveStop();
+  victory();
+  programReset();
 }
 
 void stage3LCD(int moveCommand, int moveDuration) {               //Display what the robot is doing on LCD display
@@ -244,8 +248,7 @@ void stage3LCD(int moveCommand, int moveDuration) {               //Display what
   LCD.clear();
   LCD.gotoXY(0, 1);
   LCD.print(nameCommand);
-  //millis --> delay(moveDuration);
-  //LCD.clear();
+  delay(100);
 }
 
 
@@ -294,9 +297,12 @@ void countdown() {                                                //Countsdown a
       LCD.print(moveCountdown);
       moveCountdown = moveCountdown - 1;
       delay(1000);
+      if (moveCountdown == 0) {
+        countdownDone = true;
+      }
     }
     Serial.println("moveCountdown done!");
-    countdownDone = true;
+    
   }
 }
 
@@ -317,8 +323,18 @@ void victory() {                                                  //Display succ
   delay(167);
   buzzer.playNote(NOTE_A_SHARP(5), 167, 15);
   delay(167);
+  delay(2000);
 }
 
 void readEncoders() {                                             //Read encoders
   accCountsR = accCountsR + encoders.getCountsAndResetRight();
+}
+
+void programReset(){
+  actualStage = 0;
+  moveCountdown = 5;
+  accCountsR = 0;
+  encoders.getCountsAndResetRight();
+  encoders.getCountsAndResetLeft();
+  delay(100);
 }
